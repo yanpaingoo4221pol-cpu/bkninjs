@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WinGo 30s Predictor Online</title>
+  <style>
+    body { font-family: Poppins, sans-serif; background: #0f172a; color: #f8fafc; text-align: center; padding: 20px; }
+    h1 { color: #facc15; margin-bottom: 5px; }
+    #status { color: #a5b4fc; margin-bottom: 20px; }
+    table { margin: 0 auto; border-collapse: collapse; width: 90%; max-width: 500px; background: #1e293b; border-radius: 10px; overflow: hidden; }
+    th, td { padding: 10px; border-bottom: 1px solid #334155; }
+    th { background: #334155; color: #fff; }
+    .big { color: #4ade80; font-weight: bold; }
+    .small { color: #f87171; font-weight: bold; }
+    .predict-box { background: #1e293b; margin: 20px auto; padding: 20px; width: fit-content; border-radius: 10px; }
+    .pred-big { color: #4ade80; font-size: 22px; font-weight: bold; }
+    .pred-small { color: #f87171; font-size: 22px; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>🎯 WinGo 30s Predictor</h1>
+  <div id="status">Loading...</div>
+  <div class="predict-box">
+    နောက်လာမယ့်အကြိမ် ခန့်မှန်းချက်:<br>
+    <span id="prediction">---</span>
+  </div>
+  <h3>နောက်ဆုံးအဖြေများ</h3>
+  <table>
+    <thead><tr><th>အမှတ်စဉ်</th><th>နံပါတ်</th><th>အကြီး/အသေး</th></tr></thead>
+    <tbody id="table"></tbody>
+  </table>
+
+  <script>
+    const API_URL = "/api/proxy";
+
+    async function fetchData() {
+      try {
+        document.getElementById("status").innerText = "Fetching latest results...";
+        const res = await fetch(API_URL);
+        const data = await res.json();
+        const list = data.data.list;
+
+        const tbody = document.getElementById("table");
+        tbody.innerHTML = "";
+
+        let big = 0, small = 0;
+
+        list.forEach(item => {
+          const num = parseInt(item.number);
+          const result = num >= 5 ? "အကြီး" : "အသေး";
+          if (num >= 5) big++; else small++;
+
+          const tr = document.createElement("tr");
+          tr.innerHTML = `<td>${item.issueNumber}</td><td>${num}</td><td class="${num >= 5 ? 'big' : 'small'}">${result}</td>`;
+          tbody.appendChild(tr);
+        });
+
+        const predictEl = document.getElementById("prediction");
+        if (big > small)
+          predictEl.innerHTML = `<span class="pred-small">အသေး လာနိုင်ပါတယ် 🔽</span>`;
+        else if (small > big)
+          predictEl.innerHTML = `<span class="pred-big">အကြီး လာနိုင်ပါတယ် 🔼</span>`;
+        else
+          predictEl.innerText = "တူညီနေတာကြောင့် မခန့်မှန်းနိုင်ပါ။";
+
+        document.getElementById("status").innerText = "Updated: " + new Date().toLocaleTimeString();
+      } catch (err) {
+        console.error(err);
+        document.getElementById("status").innerText = "❌ Fetch failed.";
+      }
+    }
+
+    fetchData();
+    setInterval(fetchData, 30000);
+  </script>
+</body>
+</html>
